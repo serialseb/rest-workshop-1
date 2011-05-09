@@ -1,0 +1,4 @@
+﻿name: rest-workshop
+depends: openwrap anchored content
+depends: openrasta-devtools
+depends: openrasta-hosting-aspnet = 3.0
