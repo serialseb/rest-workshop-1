@@ -1,0 +1,16 @@
+# Documentation of the OpenDocument media type
+
+Any document with a media type of application/vnd.openeverything.docs+xml will contain xml according to the following specification.
+
+
+Given an entry point URI (bookmark)
+ - find list of links by reading Link: header
+
+
+## uploading new files
+
+ In the link repository, find a link with
+   rel=http:/rels.openwrap.org/OpenDoc/index
+
+This resource accepts a POST with a document in format ... with root element DocumentInfo
+

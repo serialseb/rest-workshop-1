@@ -15,7 +15,8 @@ namespace OpenRasta.Configuration
             ResourceSpace.Has.Resource<DocumentInfo>()
                 .Uri("/documents/{id}")
                 .Handler<DocumentInfoHandler>()
-                .XmlDataContract().And
+                .OpenEverythingDoc()
+                .And
                 .JsonDataContract();
 
             ResourceSpace.Has.Resource<DocumentData>()
@@ -25,7 +26,13 @@ namespace OpenRasta.Configuration
             ResourceSpace.Has.Resource<DocumentLibrary>()
                 .Uri("/documents")
                 .Handler<DocumentLibraryHandler>()
-                .XmlDataContract();
+                .OpenEverythingDoc();
+        }
+        public static ICodecWithMediaTypeDefinition OpenEverythingDoc(this IHandlerForResourceWithUriDefinition root)
+        {
+            return root.XmlDataContract()
+                .MediaType(new MediaType("application/vnd.openeverything.docs+xml;q=0.9"))
+                .MediaType(new MediaType("application/xml"));
         }
     }
 }

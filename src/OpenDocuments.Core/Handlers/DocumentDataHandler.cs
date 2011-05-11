@@ -21,14 +21,19 @@ namespace Open.Documents
             return new OperationResult.OK();
 
         }
-        public IFile Get(int id)
+        public OperationResult Get(int id)
         {
             var doc = Database.Documents.FirstOrDefault(x => x.Id == id);
             var rawData = doc.Data;
-            return new InMemoryFile(new MemoryStream(rawData))
+            if (rawData == null)
+                return new OperationResult.NotFound();
+            return new OperationResult.OK
+                       {
+                           ResponseResource = new InMemoryFile(new MemoryStream(rawData))
                        {
                            ContentType = MediaType.ApplicationOctetStream,
                            FileName = doc.FileName
+                       }
                        };
         }
     }

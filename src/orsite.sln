@@ -5,6 +5,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "open-documents", "open-docu
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C338F2E1-833F-46BC-98C6-AF0B0805DA79}"
 	ProjectSection(SolutionItems) = preProject
+		OpenDoc rfc.txt = OpenDoc rfc.txt
 		..\rest-workshop.wrapdesc = ..\rest-workshop.wrapdesc
 	EndProjectSection
 EndProject

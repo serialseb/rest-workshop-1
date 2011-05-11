@@ -39,7 +39,7 @@ Console.WriteLine("Please enter the author");
             HttpWebRequest request = CreateRequest(uri, "POST");
 
 
-            request.ContentType = "application/xml";
+            request.ContentType = "application/vnd.openeverything.docs+xml";
             var document =
                 new MemoryStream(Encoding.UTF8.GetBytes(@"
 <DocumentInfo xmlns=""http://schemas.datacontract.org/2004/07/Open.Documents"">
@@ -78,7 +78,9 @@ Console.WriteLine("Please enter the author");
             request.Proxy = WebRequest.GetSystemWebProxy();
             request.Method = method;
 
-            request.Accept = "application/xml, */*;q=0.5";
+            request.Accept = "application/vnd.openeverything.docs+xml," +
+                " application/xml; q=0.6," +
+                "*/*;q=0.1";
             return request;
         }
 
