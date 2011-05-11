@@ -23,7 +23,7 @@ namespace OpenRasta.Configuration
                 .Handler<DocumentDataHandler>();
 
             ResourceSpace.Has.Resource<DocumentLibrary>()
-                .Uri("/documents-somewhere")
+                .Uri("/documents")
                 .Handler<DocumentLibraryHandler>()
                 .XmlDataContract();
         }

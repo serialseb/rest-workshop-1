@@ -5,73 +5,67 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 
 namespace OpenDocuments.Client
 {
     class Program
     {
+        private static string DEFAULT_NS = "http://schemas.datacontract.org/2004/07/Open.Documents";
+
         static void Main(string[] args)
         {
-            string entryBookmark = @"http://127.0.0.1.:6666/home";
+            Console.WriteLine("Enter address - defaults to http://127.0.0.1.:6666/home");
+
+            var consoleLine = Console.ReadLine();
+            string entryBookmark = string.IsNullOrEmpty(consoleLine)
+                    ? @"http://127.0.0.1.:6666/home"
+                    : consoleLine;
 
             var link = DiscoverLinkFromHeaders(entryBookmark);
 
             var uriData = link.FirstOrDefault(x => x.Value["rel"].Contains("\"http:/rels.openwrap.org/OpenDoc/index\"")).Key.Trim();
             var uri = new Uri(new Uri(entryBookmark, UriKind.Absolute),
                               new Uri(uriData.Substring(1, uriData.Length - 2), UriKind.RelativeOrAbsolute));
-            Console.WriteLine("Please enter the author");
+            
+Console.WriteLine("Please enter the author");
             string author = Console.ReadLine();
 
             Console.WriteLine("Please enter file content");
             string fileContent = Console.ReadLine();
 
+
+
             HttpWebRequest request = CreateRequest(uri, "POST");
-            request.Accept = "*/*";
-            request.ContentType = "multipart/form-data;boundary=sunnyday";
-            using (var writer = new StreamWriter(request.GetRequestStream()))
-            {
-                writer.WriteLine();
-                writer.WriteLine("--sunnyday");
-                writer.WriteLine("Content-Disposition: form-data; name=\"author\"");
-                writer.WriteLine("Content-Type: text/plain");
-                writer.WriteLine();
-                writer.WriteLine(author);
-                writer.WriteLine("--sunnyday");
-                writer.WriteLine("Content-Disposition: form-data; name=\"sentFile\"; filename=\"jonny.txt\"");
-                writer.WriteLine("Content-Type: application/octet-stream");
-                writer.WriteLine();
-                writer.WriteLine(fileContent);
-                writer.WriteLine("--sunnyday--");
-            }
 
-            try
-            {
-                Console.WriteLine("submitting request ...");
-                var response = request.GetResponse();
-                var responseStream = response.GetResponseStream();
-                if (responseStream == null)
-                {
-                    Console.WriteLine("Response is null");
-                    return;
-                }
-                var stringBuilder = new StringBuilder();
-                var buf = new byte[8192];
-                int count;
-                do
-                {
-                    count = responseStream.Read(buf, 0, buf.Length);
-                    if (count == 0) continue;
-                    var tempString = Encoding.ASCII.GetString(buf, 0, count);
-                    stringBuilder.Append(tempString);
-                }
-                while (count > 0);
-                Console.WriteLine(stringBuilder.ToString());
 
-            }
-            catch (Exception ex)
+            request.ContentType = "application/xml";
+            var document =
+                new MemoryStream(Encoding.UTF8.GetBytes(@"
+<DocumentInfo xmlns=""http://schemas.datacontract.org/2004/07/Open.Documents"">
+            <Author>" + author + @"</Author>
+            <FileName>Filename.txt</FileName>
+</DocumentInfo>"));
+            document.CopyTo(request.GetRequestStream());
+
+            var response = request.GetResponse();
+            var responseDoc = XDocument.Load(response.GetResponseStream());
+
+            var binaryHref = responseDoc.Descendants(XName.Get("DataHref", DEFAULT_NS))
+                .First().Value;
+
+            var binaryRequest = CreateRequest(binaryHref, "PUT");
+            binaryRequest.ContentType = "application/octet-stream";
+            new MemoryStream(Encoding.UTF8.GetBytes(fileContent)).CopyTo(binaryRequest.GetRequestStream());
+            var binaryResponse = (HttpWebResponse)binaryRequest.GetResponse();
+            if (binaryResponse.StatusCode == HttpStatusCode.Created)
             {
-                Console.WriteLine(ex.Message);
+                Console.WriteLine("File has been uploaded.");
             }
+            else if (binaryResponse.StatusCode == HttpStatusCode.OK)
+                Console.WriteLine("File was updated.");
+
+            Console.ReadLine();
         }
 
         private static HttpWebRequest CreateRequest(string uri, string method)
@@ -83,10 +77,12 @@ namespace OpenDocuments.Client
             var request = (HttpWebRequest)WebRequest.Create(uri);
             request.Proxy = WebRequest.GetSystemWebProxy();
             request.Method = method;
+
+            request.Accept = "application/xml, */*;q=0.5";
             return request;
         }
 
-        private static IDictionary<string, ILookup<string, string>> DiscoverLinkFromHeaders(string entryBookmark)
+        private static IEnumerable<KeyValuePair<string, ILookup<string, string>>> DiscoverLinkFromHeaders(string entryBookmark)
         {
             var headers = CreateRequest(entryBookmark, "GET").GetResponse().Headers["Link"]
                 .Split(new[]{","}, StringSplitOptions.RemoveEmptyEntries);
