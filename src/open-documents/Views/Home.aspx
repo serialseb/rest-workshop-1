@@ -5,6 +5,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <title><%= Resource.Title %></title>
+    $("link[rel='search-template']").attr("href")
     <link rel="search-template" href="/contact-us/{email}/{comment}" />
 </head>
 <body>
