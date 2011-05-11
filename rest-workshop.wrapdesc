@@ -2,3 +2,4 @@
 depends: openwrap anchored content
 depends: openrasta-devtools
 depends: openrasta-hosting-aspnet = 3.0
+build: msbuild; project=src\OpenDocuments.Core\OpenDocuments.Core.csproj
