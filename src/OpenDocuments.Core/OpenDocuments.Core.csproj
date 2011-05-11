@@ -46,6 +46,7 @@
     <Compile Include="Handlers\DocumentDataHandler.cs" />
     <Compile Include="Handlers\DocumentInfoHandler.cs" />
     <Compile Include="Handlers\DocumentLibraryHandler.cs" />
+    <Compile Include="Interceptors\AddDocumentDatabaseLinkInterceptor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Resources\DocumentData.cs" />
     <Compile Include="Resources\DocumentInfo.cs" />

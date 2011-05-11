@@ -1,4 +1,5 @@
 using Open.Documents;
+using OpenDocuments.Interceptors;
 using OpenRasta.Configuration.Fluent;
 using OpenRasta.Configuration.MetaModel;
 using OpenRasta.Web;
@@ -9,6 +10,8 @@ namespace OpenRasta.Configuration
     {
         public static void OpenDocuments(this IUses uses)
         {
+            ResourceSpace.Uses
+                .PipelineContributor<AddDocumentBookmarkContributor>();
             ResourceSpace.Has.Resource<DocumentInfo>()
                 .Uri("/documents/{id}")
                 .Handler<DocumentInfoHandler>()
@@ -20,7 +23,7 @@ namespace OpenRasta.Configuration
                 .Handler<DocumentDataHandler>();
 
             ResourceSpace.Has.Resource<DocumentLibrary>()
-                .Uri("/documents")
+                .Uri("/documents-somewhere")
                 .Handler<DocumentLibraryHandler>()
                 .XmlDataContract();
         }

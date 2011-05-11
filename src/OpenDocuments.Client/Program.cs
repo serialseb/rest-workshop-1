@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace OpenDocuments.Client
 {
@@ -11,18 +12,22 @@ namespace OpenDocuments.Client
     {
         static void Main(string[] args)
         {
+            string entryBookmark = @"http://127.0.0.1.:6666/home";
 
+            var link = DiscoverLinkFromHeaders(entryBookmark);
+
+            var uriData = link.FirstOrDefault(x => x.Value["rel"].Contains("\"http:/rels.openwrap.org/OpenDoc/index\"")).Key.Trim();
+            var uri = new Uri(new Uri(entryBookmark, UriKind.Absolute),
+                              new Uri(uriData.Substring(1, uriData.Length - 2), UriKind.RelativeOrAbsolute));
             Console.WriteLine("Please enter the author");
             string author = Console.ReadLine();
 
             Console.WriteLine("Please enter file content");
             string fileContent = Console.ReadLine();
 
-            var request = (HttpWebRequest)WebRequest.Create(@"http://127.0.0.1.:6666/documents");
-            request.Method = "POST";
+            HttpWebRequest request = CreateRequest(uri, "POST");
             request.Accept = "*/*";
             request.ContentType = "multipart/form-data;boundary=sunnyday";
-            request.Proxy = WebRequest.GetSystemWebProxy();
             using (var writer = new StreamWriter(request.GetRequestStream()))
             {
                 writer.WriteLine();
@@ -67,6 +72,39 @@ namespace OpenDocuments.Client
             {
                 Console.WriteLine(ex.Message);
             }
+        }
+
+        private static HttpWebRequest CreateRequest(string uri, string method)
+        {
+            return CreateRequest(new Uri(uri, UriKind.RelativeOrAbsolute), method);
+        }
+        private static HttpWebRequest CreateRequest(Uri uri, string method)
+        {
+            var request = (HttpWebRequest)WebRequest.Create(uri);
+            request.Proxy = WebRequest.GetSystemWebProxy();
+            request.Method = method;
+            return request;
+        }
+
+        private static IDictionary<string, ILookup<string, string>> DiscoverLinkFromHeaders(string entryBookmark)
+        {
+            var headers = CreateRequest(entryBookmark, "GET").GetResponse().Headers["Link"]
+                .Split(new[]{","}, StringSplitOptions.RemoveEmptyEntries);
+            return (from link in headers
+                    let components = link.Split(new[] {";"}, StringSplitOptions.RemoveEmptyEntries)
+                    let uri = components.First()
+                    let parameters = (from keyValue in components.Skip(1)
+                                      let key = keyValue.Substring(0, keyValue.IndexOf("="))
+                                      select
+                                          new
+                                              {
+                                                  key,
+                                                  value = keyValue.Substring(keyValue.IndexOf("=") + 1)
+                                              }
+                                     ).ToLookup(x => x.key, x => x.value)
+                    select new {uri, parameters}).ToDictionary(x => x.uri, x => x.parameters);
+            ;
+
         }
     }
 }
